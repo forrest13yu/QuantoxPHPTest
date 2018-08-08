@@ -4,7 +4,9 @@ class MySQL {
   private static $username = "root";
   private static $password = "";
   private static $database = "quantox_test";
+
   private static $conn;
+
   public static function connect()
   {
     try {
@@ -20,10 +22,9 @@ class MySQL {
 
   public static function SQL($sql)
   {
-
     try {
       self::$conn->exec($sql);
-        echo "New record created successfully";
+      echo "New record created successfully";
     }
     catch(PDOException $e)
     {
@@ -31,4 +32,4 @@ class MySQL {
     }
   }
 }
-  ?>
+?>
