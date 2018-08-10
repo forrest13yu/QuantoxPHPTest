@@ -1,3 +1,4 @@
 <?php
 
-require_once __DIR__ . '/../src/routes.php';
+// Initialize application
+require_once __DIR__ . '/../bootstrap/app.php';
