@@ -1,6 +1,6 @@
 <?php
 use function \FluidXml\fluidxml;
-
+require_once 'CVSExport.php';
 abstract class Handler
 {
 	protected $m_successor;
@@ -25,22 +25,22 @@ class JSONHandler extends Handler
 			$this->m_successor->handleRequest($request, $countryes);
 		}
 	}
- }
+}
 
- class CSVHandler extends Handler
- {
- 	public function handleRequest($request, $countryes)
- 	{
-    if ($request == 'csv')
- 		{
- 			 return FileExportController::toCSV($countryes);
- 		}
-         else
- 		{
- 			$this->m_successor->handleRequest($request, $countryes);
- 		}
- 	}
- }
+class CSVHandler extends Handler
+{
+	public function handleRequest($request, $countryes)
+	{
+		if ($request == 'csv')
+		{
+			return CVSExport::toCSV($countryes);
+		}
+		else
+		{
+			$this->m_successor->handleRequest($request, $countryes);
+		}
+	}
+}
 
 class XMLHandler extends Handler
 {
@@ -48,11 +48,11 @@ class XMLHandler extends Handler
 	{
 		if ($request == 'xml')
 		{
-      $book = fluidxml();
-      $book->add($countryes);
-      return $book;
+			$book = fluidxml();
+			$book->add($countryes);
+			return $book;
 		}
-        else
+		else
 		{
 			$this->m_successor->handleRequest($request, $countryes);
 		}

@@ -1,6 +1,6 @@
 <?php
 namespace Vanila\Controllers;
-
+use Exception;
 use Carbon\Carbon;
 
 class EventUpdateController extends EventBase

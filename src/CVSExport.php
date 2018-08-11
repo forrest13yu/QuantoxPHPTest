@@ -1,5 +1,5 @@
 <?php
-class FileExportController
+class CVSExport
 {
   public static function toCSV($countryes)
   {

@@ -3,8 +3,8 @@ namespace Vanila\Controllers;
 
 use Carbon\Carbon;
 
-require_once 'FileExportController.php';
-require_once 'test.php';
+
+require_once __DIR__ . '/../ResponceHendler.php';
 use PDO;
 
 class EventGetController extends EventBase
