@@ -16,13 +16,14 @@ class JSONHandler extends Handler
 {
 	public function handleRequest($request, $countryes)
 	{
+		var_dump($request);;
 		if ($request === 'json' || $request == '')
 		{
 			return json_encode($countryes);
 		}
 		else
 		{
-			$this->m_successor->handleRequest($request, $countryes);
+			return $this->m_successor->handleRequest($request, $countryes);
 		}
 	}
 }
@@ -31,13 +32,14 @@ class CSVHandler extends Handler
 {
 	public function handleRequest($request, $countryes)
 	{
-		if ($request == 'csv')
+		var_dump($request);;
+		if ($request === 'csv')
 		{
 			return CVSExport::toCSV($countryes);
 		}
 		else
 		{
-			$this->m_successor->handleRequest($request, $countryes);
+			return $this->m_successor->handleRequest($request, $countryes);
 		}
 	}
 }
@@ -46,7 +48,8 @@ class XMLHandler extends Handler
 {
 	public function handleRequest($request, $countryes)
 	{
-		if ($request == 'xml')
+		var_dump($request);;
+		if ($request === 'xml')
 		{
 			$book = fluidxml();
 			$book->add($countryes);
@@ -54,7 +57,7 @@ class XMLHandler extends Handler
 		}
 		else
 		{
-			$this->m_successor->handleRequest($request, $countryes);
+			return "Unsuported data format.";
 		}
 	}
 }

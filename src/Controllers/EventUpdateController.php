@@ -20,7 +20,8 @@ class EventUpdateController extends EventBase
   private function UpdateCount($result, $date)
   {
     $update_sql = "INSERT INTO `country`(`name`, `event_total_count`) VALUES (':name',':count') ON DUPLICATE KEY UPDATE `event_total_count`= `event_total_count`+ :count;";
-    $bulk_update_sql = "";
+    $bulk_update_country_sql = "";
+    $bulk_update_event_sql = "";
 
     reset($result);
     $event = current($result);
@@ -28,14 +29,14 @@ class EventUpdateController extends EventBase
     $country = $event["country"];
     $total = $event["count"];
     do{
-      $this->UpdateEvents($country, $event['event'], $total, $date);
+      $bulk_update_event_sql .= $this->UpdateEvents($country, $event['event'], $total, $date);
       $event = next($result);
 
       if(($event !== false) && ($country === $event["country"]))
       {
         $total += $event["count"];
       }else {
-        $bulk_update_sql .= $this->pdo->build_pdo_query($update_sql, ["name"=>$country, "count"=>$total]);
+        $bulk_update_country_sql .= $this->pdo->build_pdo_query($update_sql, ["name"=>$country, "count"=>$total]);
         if($event !== false)
         {
           $total = $event["count"];
@@ -44,7 +45,8 @@ class EventUpdateController extends EventBase
       }
     }while ($event !== false);
 
-    $this->pdo->ExecSQL($bulk_update_sql);
+    $this->pdo->ExecSQL($bulk_update_country_sql);
+    $this->pdo->ExecSQL($bulk_update_event_sql);
   }
 
   private function UpdateEvents($country, $event, $daily_total, $date)
@@ -57,7 +59,7 @@ class EventUpdateController extends EventBase
     {
       $this->pdo->ExecSQL("INSERT INTO `event` (`name`) VALUES ('$event')");
     }
-    $this->pdo->ExecSQL("INSERT INTO `event_counter` (`country`,`event`,`daily_total`,`date`) VALUES ('$country', '$event', $daily_total, '$date') ON DUPLICATE KEY UPDATE `daily_total`=`daily_total`+$daily_total");
+    return "INSERT INTO `event_counter` (`country`,`event`,`daily_total`,`date`) VALUES ('$country', '$event', $daily_total, '$date') ON DUPLICATE KEY UPDATE `daily_total`=`daily_total`+$daily_total;";
   }
 
   private function RemoveOldCount($serverTime)

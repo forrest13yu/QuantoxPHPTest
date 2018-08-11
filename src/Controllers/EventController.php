@@ -5,7 +5,6 @@ use Carbon\Carbon;
 
 class EventController extends EventBase
 {
-
   public function insert($request)
   {
     $data = $request->all;

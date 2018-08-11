@@ -11,11 +11,11 @@ class CVSExport
     {
       fputcsv($file, array_values ($country));
     }
+    
     fclose($file);
+    $sever_root = str_replace('index.php', '', $_SERVER["HTTP_HOST"].'/'.$_SERVER["SCRIPT_NAME"]);
 
-    $sever_root = $_SERVER["HTTP_HOST"];
-
-    header("Location:http://localhost/quantoxphptest/public/$FileName");
+    header("Location:http://$sever_root$FileName");
     exit();
   }
 }

@@ -3,8 +3,8 @@ namespace Vanila\Controllers;
 
 use Carbon\Carbon;
 
-
 require_once __DIR__ . '/../ResponceHendler.php';
+
 use PDO;
 
 class EventGetController extends EventBase
@@ -17,6 +17,7 @@ class EventGetController extends EventBase
     $h1 = new \JSONHandler();
 		$h2 = new \CSVHandler();
 		$h3 = new \XMLHandler();
+
 		$h1->setSuccessor($h2);
 		$h2->setSuccessor($h3);
     $this->h1 = $h1;
@@ -38,6 +39,7 @@ class EventGetController extends EventBase
     }
 
     $param = (count($request->params) === 0 ? "" : $request->params["data_type"]);
-    return $this->h1->handleRequest($param, $countryes);
+    $return = $this->h1->handleRequest($param, $countryes);
+    return $return;
   }
 }
