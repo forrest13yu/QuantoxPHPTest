@@ -3,17 +3,25 @@ namespace Vanila\Controllers;
 
 use Symfony\Component\HttpFoundation\Response;
 use Carbon\Carbon;
-use function \FluidXml\fluidxml;
+use function test\JSONHandler;
 
 use PDO;
 require_once 'FileExportController.php';
+require_once 'test.php';
 class EventController
 {
   private $pdo;
-
+  private $h1;
   public function __construct(PDO $pdo)
   {
     $this->pdo = new PdoController($pdo);
+
+    $h1 = new \JSONHandler();
+		$h2 = new \CSVHandler();
+		$h3 = new \XMLHandler();
+		$h1->setSuccessor($h2);
+		$h2->setSuccessor($h3);
+    $this->h1 = $h1;
   }
 
   public function insert($request)
@@ -42,32 +50,16 @@ class EventController
 
       $countryes[$key]["event_count"] = $events[0]["daily_total"];
     }
-    return $this->ReturnData();
+
+    return $this->ReturnData($request, $countryes);
   }
 
-  private function ReturnData($request, $countryes);
+  private function ReturnData($request, $countryes)
   {
-    if(count($request->params) === 0)
-    {
-      return json_encode($countryes);
-    }else{
-      switch ($request->params["data_type"]) {
-        case "json":
-        return json_encode($countryes);
-        break;
-        case 'csv':
-        return FileExportController::toCSV($countryes);
-        break;
-        case 'xml':
-        $book = fluidxml();
-        $book->add($countryes);
-        return $book;
-        break;
-        default:
-        return json_encode($countryes);
-      }
-    }
+    $param = (count($request->params) === 0 ? "" : $request->params["data_type"]);
+    return $this->h1->handleRequest($param, $countryes);
   }
+
   public function test($request)
   {
     $dt = new Carbon($this->pdo->GetDBTimeStamp());
