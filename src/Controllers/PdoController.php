@@ -36,4 +36,13 @@ class PdoController
   {
     return $this->GetElements("SELECT CURRENT_TIMESTAMP")[0]["CURRENT_TIMESTAMP"];
   }
+
+  public function searchForId($id, $array) {
+    foreach ($array as $key => $val) {
+      if ($val['name'] === $id) {
+        return $key;
+      }
+    }
+    return null;
+  }
 }

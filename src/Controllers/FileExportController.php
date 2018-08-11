@@ -4,26 +4,18 @@ class FileExportController
   public static function toCSV($countryes)
   {
     $FileName = "_export.csv";
+
     $file = fopen($FileName,"w");
-
-    $HeadingsArray=array();
-    foreach($countryes[0] as $name => $value){
-      $HeadingsArray[]=$name;
-    }
-    fputcsv($file,$HeadingsArray);
-
+    fputcsv($file,array_keys($countryes[0]));
     foreach ($countryes as $country)
     {
-      $valuesArray=array();
-      foreach($country as $name => $value){
-        $valuesArray[]=$value;
-      }
-
-      fputcsv($file, $valuesArray);
+      fputcsv($file, array_values ($country));
     }
     fclose($file);
+
     $sever_root = $_SERVER["HTTP_HOST"];
-    header("Location: http://$sever_root/$FileName");
+
+    header("Location:http://localhost/quantoxphptest/public/$FileName");
     exit();
   }
 }
