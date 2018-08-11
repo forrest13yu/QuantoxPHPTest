@@ -1,5 +1,2 @@
 Options +FollowSymLinks -MultiViews
-RewriteEngine On
-RewriteBase /public/
-RewriteCond %{REQUEST_URI} !/public [NC]
-RewriteRule ^(.*)$ index.php/$1 [L]
+Redirect 301 /pulic/index.php /

@@ -89,7 +89,7 @@ switch ($routeInfo[0]) {
 
       // Generate a response by invoking the appropriate route method in the controller
       $request->all = json_decode( file_get_contents( 'php://input' ), true );
-      $request->params = $routeParams;
+      $request->params = $_REQUEST;
 
       $response = new Response($controller->$routeMethod($request));
 

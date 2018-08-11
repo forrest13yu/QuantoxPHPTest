@@ -3,15 +3,17 @@ namespace Vanila\Controllers;
 
 use Symfony\Component\HttpFoundation\Response;
 use Carbon\Carbon;
-use PDO;
+use function \FluidXml\fluidxml;
 
+use PDO;
+require_once 'FileExportController.php';
 class EventController
 {
-
   private $pdo;
+
   public function __construct(PDO $pdo)
   {
-    $this->pdo = $pdo;
+    $this->pdo = new PdoController($pdo);
   }
 
   public function insert($request)
@@ -19,7 +21,7 @@ class EventController
     $data = $request->all;
     if($data != null)
     {
-      $this->ExecSQL("INSERT INTO `event_counter_tmp`(`country`,`event`) VALUES('". $data["country"] . "','". $data["event"] ."')");
+      $this->pdo->ExecSQL("INSERT INTO `event_counter_tmp`(`country`,`event`) VALUES('". $data["country"] . "','". $data["event"] ."')");
       return '{"status":"done"}';
     }else{
       throw new Exception('Data not pressent');
@@ -29,18 +31,22 @@ class EventController
   public function get_all($request)
   {
     $sql= "SELECT `name` as `country` FROM `country` ORDER BY `event_total_count` LIMIT 5";
-    $countryes = $this->GetElements($sql);
-    $dt = new Carbon($this->GetDBTimeStamp());
+    $countryes = $this->pdo->GetElements($sql);
+    $dt = new Carbon($this->pdo->GetDBTimeStamp());
     $date_from = $dt->addDays(-7)->toDateString();
     foreach ($countryes as $key=>$country) {
       $country_name = $country["country"];
       $events_sql= "SELECT SUM(`daily_total`) AS `daily_total` FROM `event_counter` WHERE `country`= '$country_name' AND `date` > '$date_from'";
 
-      $events =$this->GetElements($events_sql);
+      $events =$this->pdo->GetElements($events_sql);
 
       $countryes[$key]["event_count"] = $events[0]["daily_total"];
     }
+    return $this->ReturnData();
+  }
 
+  private function ReturnData($request, $countryes);
+  {
     if(count($request->params) === 0)
     {
       return json_encode($countryes);
@@ -50,47 +56,24 @@ class EventController
         return json_encode($countryes);
         break;
         case 'csv':
-        return $this->toCSV($countryes);
+        return FileExportController::toCSV($countryes);
         break;
-
+        case 'xml':
+        $book = fluidxml();
+        $book->add($countryes);
+        return $book;
+        break;
         default:
         return json_encode($countryes);
       }
     }
   }
-
-  private function toCSV($countryes)
-  {
-    $FileName = "_export.csv";
-    $file = fopen($FileName,"w");
-
-    $HeadingsArray=array();
-    foreach($countryes[0] as $name => $value){
-      $HeadingsArray[]=$name;
-    }
-    fputcsv($file,$HeadingsArray);
-
-    foreach ($countryes as $country)
-    {
-      $valuesArray=array();
-      foreach($country as $name => $value){
-        $valuesArray[]=$value;
-      }
-
-      fputcsv($file, $valuesArray);
-    }
-    fclose($file);
-    $sever_root = $_SERVER["HTTP_HOST"];
-    header("Location: http://$sever_root/$FileName");
-    exit();
-  }
-
   public function test($request)
   {
-    $dt = new Carbon($this->GetDBTimeStamp());
+    $dt = new Carbon($this->pdo->GetDBTimeStamp());
     $serverTime = $dt->addSeconds(-5);
     $select_sql = "SELECT COUNT(event) as `count`, `country`,`event` FROM `event_counter_tmp` WHERE `date` < '$serverTime' GROUP BY `country`,`event` ORDER BY `country`";
-    $result = $this->GetElements($select_sql);
+    $result = $this->pdo->GetElements($select_sql);
 
     $this->UpdateCount($result, $dt->toDateString());
     $this->RemoveOldCount($serverTime);
@@ -115,7 +98,7 @@ class EventController
       {
         $total += $event["count"];
       }else {
-        $bulk_update_sql .= $this->build_pdo_query($update_sql, ["name"=>$country, "count"=>$total]);
+        $bulk_update_sql .= $this->pdo->build_pdo_query($update_sql, ["name"=>$country, "count"=>$total]);
         if($event !== false)
         {
           $total = $event["count"];
@@ -124,20 +107,20 @@ class EventController
       }
     }while ($event !== false);
 
-    $this->ExecSQL($bulk_update_sql);
+    $this->pdo->ExecSQL($bulk_update_sql);
   }
 
   private function UpdateEvents($country, $event, $daily_total, $date)
   {
     $select_even_sql = "SELECT * FROM `event`";
-    $events = $this->GetElements($select_even_sql);
+    $events = $this->pdo->GetElements($select_even_sql);
     $event_key = $this->searchForId($event, $events);
 
     if($event_key !== null)
     {
-      $this->ExecSQL("INSERT INTO `event` (`name`) VALUES ('$event')");
+      $this->pdo->ExecSQL("INSERT INTO `event` (`name`) VALUES ('$event')");
     }
-    $this->ExecSQL("INSERT INTO `event_counter` (`country`,`event`,`daily_total`,`date`) VALUES ('$country', '$event', $daily_total, '$date') ON DUPLICATE KEY UPDATE `daily_total`=`daily_total`+$daily_total");
+    $this->pdo->ExecSQL("INSERT INTO `event_counter` (`country`,`event`,`daily_total`,`date`) VALUES ('$country', '$event', $daily_total, '$date') ON DUPLICATE KEY UPDATE `daily_total`=`daily_total`+$daily_total");
   }
 
   function searchForId($id, $array) {
@@ -151,32 +134,6 @@ class EventController
 
   private function RemoveOldCount($serverTime)
   {
-    return $this->ExecSQL("DELETE FROM `event_counter_tmp` WHERE `date` < '$serverTime'")->rowCount();
-  }
-
-  private function GetDBTimeStamp()
-  {
-    return $this->GetElements("SELECT CURRENT_TIMESTAMP")[0]["CURRENT_TIMESTAMP"];
-  }
-
-  private function GetElements($sql)
-  {
-    $handle = $this->ExecSQL($sql);
-    return $handle->fetchAll(PDO::FETCH_ASSOC);
-  }
-
-  private function ExecSQL($sql)
-  {
-    $handle = $this->pdo->prepare($sql);
-    $handle->execute();
-    return $handle;
-  }
-
-  private function build_pdo_query($sql, $param_array)
-  {
-    foreach ($param_array as $key=>$param) {
-      $sql = str_replace(":".$key, $param, $sql);
-    }
-    return $sql;
+    return $this->pdo->ExecSQL("DELETE FROM `event_counter_tmp` WHERE `date` < '$serverTime'")->rowCount();
   }
 }

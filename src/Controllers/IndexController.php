@@ -3,7 +3,6 @@ namespace Vanila\Controllers;
 
 use Exception;
 use Symfony\Component\HttpFoundation\Response;
-use Twig_Environment;
 
 class IndexController
 {
